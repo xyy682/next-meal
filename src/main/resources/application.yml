@@ -15,7 +15,7 @@ server:
   port: 8080
 agentscope:
   dashscope:
-    api-key: 请填入自己的apiKey
+    api-key: ${DASHSCOPE_API_KEY}
 diet:
   llm:
     main-model: qwen-max
