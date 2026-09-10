@@ -68,10 +68,10 @@ NextMeal 能根据用餐时段、口味、健康目标、忌口和预算等条�
 
 ### 1. 环境要求
 
-- JDK 21
 - Docker Desktop
-- Maven 3.9+
 - 可调用通义千问的 DashScope API Key
+
+使用 Docker 完整运行时不需要在本机安装 JDK 或 Maven。
 
 ### 2. 克隆项目
 
@@ -102,14 +102,21 @@ $key = [Environment]::GetEnvironmentVariable(
 if ($key -and $key.Trim().StartsWith("sk-")) { "设置成功" } else { "未设置成功" }
 ```
 
-### 4. 启动 MySQL
+### 4. 首次构建并启动完整应用
 
 ```powershell
-docker compose up -d
+docker compose up -d --build
 docker compose ps
 ```
 
-首次创建数据卷时会自动执行 `src/main/resources/db/diet_db.sql`。默认连接信息如下：
+Compose 会同时启动 `nextmeal-app` 和 `diet-agent-mysql`。等待数据库显示 `healthy`、应用显示 `Up` 后，访问：
+
+- Web 页面：<http://localhost:8080>
+- API 前缀：`http://localhost:8080/api/v1/diet`
+
+以后可以直接在 Docker Desktop 的 Containers 页面启动或停止整个 Compose 项目，不需要再执行 `mvn spring-boot:run`。
+
+首次创建数据卷时会自动执行 `src/main/resources/db/diet_db.sql`。默认数据库连接信息如下：
 
 | 配置 | 默认值 |
 | --- | --- |
@@ -118,26 +125,27 @@ docker compose ps
 | 用户名 | `root` |
 | 密码 | `123456` |
 
-可以使用 `DB_URL`、`DB_USERNAME`、`DB_PASSWORD` 和 `MYSQL_ROOT_PASSWORD` 环境变量覆盖默认值。
+可以使用 `MYSQL_ROOT_PASSWORD` 环境变量覆盖默认密码。
 
-### 5. 启动应用
+### 5. 查看日志
 
 ```powershell
-mvn spring-boot:run
+docker compose logs -f app
 ```
 
-也可以在 IntelliJ IDEA 中运行 `src/main/java/com/diet/DietApplication.java`。启动成功后访问：
+按 `Ctrl+C` 退出日志查看不会停止容器。
 
-- Web 页面：<http://localhost:8080>
-- API 前缀：`http://localhost:8080/api/v1/diet`
-
-### 6. 停止数据库
+### 6. 停止完整应用
 
 ```powershell
 docker compose down
 ```
 
 该命令保留数据卷。`docker compose down -v` 会永久删除本项目的 MySQL 数据，请谨慎使用。
+
+### 本机开发模式（可选）
+
+需要调试 Java 代码时，也可以只启动 MySQL，再在 IntelliJ IDEA 中运行 `src/main/java/com/diet/DietApplication.java`，或者使用 JDK 21 和 Maven 3.9+ 执行 `mvn spring-boot:run`。此时不要同时启动 Compose 中的 `app` 服务，否则两者都会占用 `8080` 端口。
 
 ## 主要接口
 
